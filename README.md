@@ -65,8 +65,8 @@ esp-matter SDK 的 data-model-provider 為 codegen cluster 提供 `FindClusterOn
 
 | Patch | Upstream PR |
 |-------|-------------|
-| `esp-matter-temperature-measurement-find-cluster.patch` | （待填） |
-| `esp-matter-fan-control-find-cluster.patch` | （待填） |
+| `esp-matter-temperature-measurement-find-cluster.patch` | espressif/esp-matter#1816 |
+| `esp-matter-fan-control-find-cluster.patch` | espressif/esp-matter#1817 |
 
 upstream merge 後可刪除對應 patch 檔，`setup.sh` 會自動跳過已 apply 的 patch。
 

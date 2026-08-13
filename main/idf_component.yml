@@ -1,0 +1,6 @@
+dependencies:
+  espressif/cmake_utilities:
+    version: "^1"
+    rules:
+      - if: "idf_version >=5.0"
+      - if: "target in [esp32c6]"

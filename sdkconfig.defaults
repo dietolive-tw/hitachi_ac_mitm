@@ -1,0 +1,75 @@
+CONFIG_IDF_TARGET="esp32c6"
+
+# Flash 16MB（ESP32-C6 實際晶片為 16MB）
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="16MB"
+
+# 啟用 BOYA flash chip 專用 driver（消除 generic driver 警告）
+CONFIG_SPI_FLASH_SUPPORT_BOYA_CHIP=y
+
+# enable BT (Thread/Bluetooth commissioning)
+CONFIG_BT_ENABLED=y
+CONFIG_BT_NIMBLE_ENABLED=y
+CONFIG_BT_NIMBLE_ENABLE_CONN_REATTEMPT=n
+# WiFi+Thread 雙模：BLE 用於 commissioning，配對後可同時走 WiFi 與 Thread
+CONFIG_USE_BLE_ONLY_FOR_COMMISSIONING=n
+
+# ===== OpenThread (WiFi+Thread 雙模共存) =====
+# ESP32-C6 有硬體 PTI 支援 WiFi/802.15.4 coexistence
+CONFIG_OPENTHREAD_ENABLED=y
+CONFIG_OPENTHREAD_SRP_CLIENT=y
+CONFIG_OPENTHREAD_DNS_CLIENT=y
+CONFIG_OPENTHREAD_LOG_LEVEL_DYNAMIC=n
+CONFIG_OPENTHREAD_LOG_LEVEL_NOTE=y
+CONFIG_OPENTHREAD_CLI=n
+# ENABLE_MATTER_OVER_THREAD 預設=y（depends on OPENTHREAD_ENABLED）
+# ENABLE_CONCURRENT_CONNECTION 預設=y（允許 WiFi+Thread 同時連線）
+
+# WiFi+Thread 雙模：Thread network commissioning 用獨立 endpoint（不能和 WiFi 的 endpoint 0 衝突）
+# WiFi 用 endpoint 0（root）
+# Thread 用 secondary_network_interface 的動態 endpoint ID
+# 動態 endpoint 建立順序：thermostat=1, ac_power=2, compressor=3, secondary_net=4
+# 因此 CONFIG_THREAD_NETWORK_ENDPOINT_ID 必須 = 4 才能對到 secondary_network_interface
+# （ESPMatterNetworkCommissioningClusterServerInitCallback 會在 endpoint_id == 此值時註冊 Thread driver）
+CONFIG_THREAD_NETWORK_ENDPOINT_ID=4
+CONFIG_WIFI_NETWORK_ENDPOINT_ID=0
+
+# Disable lwip ipv6 autoconfig（Thread 設備不需要）
+CONFIG_LWIP_IPV6_AUTOCONFIG=n
+
+# LwIP config for OpenThread（雙模需要更多 IPv6 位址）
+CONFIG_LWIP_IPV6_NUM_ADDRESSES=8
+CONFIG_LWIP_MULTICAST_PING=y
+
+# Use a custom partition table（WiFi+Thread 雙模需要較大 app slot）
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_FILENAME="partitions_wifi_thread.csv"
+CONFIG_PARTITION_TABLE_OFFSET=0xC000
+
+# Enable chip shell
+CONFIG_ENABLE_CHIP_SHELL=y
+
+# 5 個動態 endpoint: thermostat + 2x contact_sensor + secondary_net + 預留 1 個
+CONFIG_ESP_MATTER_MAX_DYNAMIC_ENDPOINT_COUNT=5
+
+# enable lwIP route hooks
+CONFIG_LWIP_HOOK_IP6_ROUTE_DEFAULT=y
+CONFIG_LWIP_HOOK_ND6_GET_GW_DEFAULT=y
+
+# Button
+CONFIG_BUTTON_PERIOD_TIME_MS=20
+CONFIG_BUTTON_LONG_PRESS_TIME_MS=5000
+
+# disable softap by default
+CONFIG_ESP_WIFI_SOFTAP_SUPPORT=n
+
+# Enable OTA Requestor
+CONFIG_ENABLE_OTA_REQUESTOR=y
+
+CONFIG_ENABLE_WIFI_AP=n
+
+# Enable HKDF in mbedtls
+CONFIG_MBEDTLS_HKDF_C=y
+
+# disable groupcast cluster until verified
+CONFIG_SUPPORT_GROUPCAST_CLUSTER=n

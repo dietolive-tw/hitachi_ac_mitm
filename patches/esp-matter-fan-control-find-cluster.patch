@@ -1,0 +1,46 @@
+From dbae3b6a2fa6ab28ab55262a4f174dfbd5d8edf6 Mon Sep 17 00:00:00 2001
+From: ken <ken1_kuo@pegatroncorp.com>
+Date: Wed, 12 Aug 2026 18:47:13 +0800
+Subject: [PATCH] fan_control: add FindClusterOnEndpoint wrapper
+
+The flow_measurement and relative_humidity_measurement integration.cpp files
+provide a namespace-level FindClusterOnEndpoint() wrapper so application code
+can access the codegen FanControl cluster instance and call methods like
+SetPercentCurrent() directly. fan_control was missing this wrapper.
+
+The upstream CodegenIntegration.h declares FindClusterOnEndpoint(), but the
+matching CodegenIntegration.cpp is excluded from the esp-matter build by
+CMakeLists.txt (EXCLUDE_SRCS_LIST for Codegen*.cpp). Without this wrapper in
+integration.cpp (the file actually compiled), app code that calls
+FindClusterOnEndpoint gets a link error.
+
+Add it following the flow_measurement pattern.
+
+Refs: pattern from clusters/flow_measurement/integration.cpp
+---
+ .../clusters/fan_control/integration.cpp                 | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/components/esp_matter/data_model_provider/clusters/fan_control/integration.cpp b/components/esp_matter/data_model_provider/clusters/fan_control/integration.cpp
+index 49948d4e..f4a968ab 100644
+--- a/components/esp_matter/data_model_provider/clusters/fan_control/integration.cpp
++++ b/components/esp_matter/data_model_provider/clusters/fan_control/integration.cpp
+@@ -186,6 +186,15 @@ namespace app {
+ namespace Clusters {
+ namespace FanControl {
+ 
++FanControlCluster * FindClusterOnEndpoint(EndpointId endpointId)
++{
++    auto it = gServers.find(endpointId);
++    if (it == gServers.end() || !it->second.server.IsConstructed()) {
++        return nullptr;
++    }
++    return &it->second.server.Cluster();
++}
++
+ void SetDefaultDelegate(EndpointId endpointId, Delegate * delegate)
+ {
+     auto it = gServers.find(endpointId);
+-- 
+2.55.0
+

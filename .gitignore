@@ -1,0 +1,9 @@
+build/
+sdkconfig
+sdkconfig.old
+sdkconfig.bak
+dependencies.lock
+managed_components/
+
+# esp-matter SDK 不在這個 repo 內（透過 setup.sh 取得）
+.esp-matter/

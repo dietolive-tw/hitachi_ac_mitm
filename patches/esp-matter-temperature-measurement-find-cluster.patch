@@ -1,0 +1,58 @@
+From 2f90f4957d5dffbcea4a14503633664c418af3a8 Mon Sep 17 00:00:00 2001
+From: ken <ken1_kuo@pegatroncorp.com>
+Date: Wed, 12 Aug 2026 18:40:48 +0800
+Subject: [PATCH] temperature_measurement: add FindClusterOnEndpoint and
+ SetMeasuredValue wrappers
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The flow_measurement and relative_humidity_measurement integration.cpp files
+provide namespace-level FindClusterOnEndpoint() and SetMeasuredValue() wrappers
+so application code can write to codegen cluster storage directly (bypassing
+esp-matter attribute::update, which desyncs for non-writable attributes on
+codegen clusters — esp-matter storage vs codegen mMeasuredValue).
+
+temperature_measurement was missing these wrappers. Add them following the
+flow_measurement pattern so apps using TemperatureMeasurement can use
+SetMeasuredValue() the same way.
+
+Refs: pattern from clusters/flow_measurement/integration.cpp
+---
+ .../temperature_measurement/integration.cpp   | 20 +++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/components/esp_matter/data_model_provider/clusters/temperature_measurement/integration.cpp b/components/esp_matter/data_model_provider/clusters/temperature_measurement/integration.cpp
+index 74534838..2d869447 100644
+--- a/components/esp_matter/data_model_provider/clusters/temperature_measurement/integration.cpp
++++ b/components/esp_matter/data_model_provider/clusters/temperature_measurement/integration.cpp
+@@ -35,6 +35,26 @@ namespace {
+ std::unordered_map<EndpointId, LazyRegisteredServerCluster<TemperatureMeasurementCluster>> gServers;
+ } // namespace
+ 
++namespace chip::app::Clusters::TemperatureMeasurement {
++
++TemperatureMeasurementCluster * FindClusterOnEndpoint(EndpointId endpointId)
++{
++    auto it = gServers.find(endpointId);
++    if (it == gServers.end() || !it->second.IsConstructed()) {
++        return nullptr;
++    }
++    return &it->second.Cluster();
++}
++
++CHIP_ERROR SetMeasuredValue(EndpointId endpointId, DataModel::Nullable<int16_t> measuredValue)
++{
++    auto * cluster = FindClusterOnEndpoint(endpointId);
++    VerifyOrReturnError(cluster != nullptr, CHIP_ERROR_NOT_FOUND);
++    return cluster->SetMeasuredValue(measuredValue);
++}
++
++} // namespace chip::app::Clusters::TemperatureMeasurement
++
+ void ESPMatterTemperatureMeasurementClusterServerInitCallback(EndpointId endpointId)
+ {
+     VerifyOrReturn(cluster::get(endpointId, TemperatureMeasurement::Id) != nullptr,
+-- 
+2.55.0
+
